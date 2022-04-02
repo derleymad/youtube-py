@@ -1,27 +1,34 @@
-from pytube import YouTube
-import moviepy.editor as mp
-from alive_progress import alive_bar
-import os, time
+from fileinput import filename
+from pytube import YouTube 
+import time
+import os
 
-nlinks = 0
-with open("links.txt") as file:
-    for url in file:
-        nlinks += 1
+links = []
 
-with alive_bar(nlinks) as bar:
-    with open("links.txt") as file:
-         for url in file:
-             title = 'mp3Download'
-             video = YouTube(url).streams.get_audio_only()
-             titname = str(video.title)
-             video.download("musicas", filename=f'{titname}.mp4')
+def clearConsole():
+    command = 'clear'
+    if os.name in ('nt', 'dos'):  # If Machine is running on Windows, use cls
+        command = 'cls'
+    os.system(command)
 
-             time.sleep(0.5)
-             clip = mp.AudioFileClip(rf"musicas/{titname}.mp4")
-             time.sleep(0.5)
-             clip.write_audiofile(rf"musicas/{titname}.mp3", verbose=False, logger='none')
-             os.remove(rf"musicas/{titname}.mp4")
-             bar()
+with open('links.txt') as file:
+    for URL in file:
+        links.append(URL)
 
+try:
+    for link in links:
+        yt = YouTube(link)
+        tit = str(yt.title)
 
+        print('Baixando ' + tit +'...')
 
+        video = yt.streams.filter(only_audio=True).first()
+        musica = video.download("musicas", filename=f'{tit}.mp3')
+    clearConsole() 
+    print("\nBaixou tudo com Sucesso\n")
+
+    print('--------------------------\n' + 'Feito com s2 por derleymad' + '\n--------------------------')
+    time.sleep(2)
+
+except:
+    print("\nAlguma coisa deu errado")
