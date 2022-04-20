@@ -126,8 +126,8 @@ pb = ttk.Progressbar(root,orient='horizontal',mode='determinate',length=300)
 pb.grid(row=22,column=0, columnspan=3, pady=5)
 
 #LABEL DO LINK COPIADO
-link_label = Label(root,text="Link copiado :",bg="white") 
-link_label.grid(row=2,column=0,pady=5,padx=5)
+link_label = Label(root,text="Link copiado :",bg="#E8D579") 
+link_label.grid(row=1,column=0,pady=5,padx=5)
 
 #LIST BOX
 list_tasks = tk.Listbox(root,justify="center",width=70,height=10,bd=2, fg="green")
@@ -141,8 +141,8 @@ linkText.bind("<Return>", add_item)
 linkText.focus()
 
 #DIRETÓRIO A SER SELECIONADO LABEL
-destination_label = Label(root,text="Salvar em :",bg="#E8D579") 
-destination_label.grid(row=1,column=0,pady=5,padx=5) 
+destination_label = Label(root,text="Salvar em :",bg="white") 
+destination_label.grid(row=2,column=0,pady=5,padx=5) 
 
 #DIRETÓRIO A SER SELECIONADO ENTRY
 destinationText = Entry(root,width=40,textvariable=download_Path) 
