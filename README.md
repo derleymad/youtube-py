@@ -2,5 +2,6 @@
 <br>
 <p align="center">Baixe o arquivo <a href="https://github.com/derleymad/youtube-py/raw/main/src/dist/YouLey.exe">YouLey</a> </p>
 <p align="center">Adicione os links pressionando "Enter", e depois clique em baixar tudo</p>
-<img align="center" src="https://github.com/derleymad/youtube-py/blob/main/assets/demo.PNG?raw=true">
-
+<div align="center">
+  <img src="https://github.com/derleymad/youtube-py/blob/main/assets/demo.PNG?raw=true">
+</div>
