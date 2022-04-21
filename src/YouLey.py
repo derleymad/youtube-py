@@ -2,21 +2,15 @@ from tkinter import messagebox, filedialog
 from pytube import YouTube,Playlist
 from pathlib import Path
 from tkinter import ttk
+import re,os,threading
 from tkinter import *
 import tkinter as tk
-import re,os,threading
 
-threads = []
-links = []
-tits = []
+linksNaoBaixados,threads,links,tits,erros,atual = [],[],[],[],0,0
 
-atual = 0
-
-def openNewWindow():
-    newWindow = Toplevel(root)
-    newWindow.title("New Window")
-    newWindow.geometry("200x200")
-
+def bToM(number):
+    return number / 1000000
+    
 def startThreadProcess():
     myNewThread = threading.Thread(target=Download)
     threads.append(myNewThread)
@@ -34,17 +28,17 @@ def add_item(Event=None):
     #Se for playlist
     if 'playlist' in x:
         print('é uma playlist')
-        #Baixa playlist
         p = Playlist(target)
+
         try:
             for url in p.video_urls:
                 links.append(str(url))
                 yt = YouTube(url)
                 tit = str(yt.title)
-
                 list_tasks.insert("0",tit)
                 progresslabel.config(text="0" + "/" + str(len(links)))
         except:
+            print("erro em adiconar elem na playlist")
             clear_input()
             return
         clear_input()
@@ -63,8 +57,10 @@ def add_item(Event=None):
             tit = str(yt.title)
             tits.append(tit)
         except:
+            print('falta um link válido')
             clear_input()
             return
+
         clear_input()
         links.append(target)
         list_tasks.insert("0",tit)
@@ -74,77 +70,84 @@ def clear_input(Event=None):
     linkText.delete(0,"end")
     
 def reset_task_list(Event=None):
-    global atual,links,tits
+    global erros,atual,links,tits,linksNaoBaixados;erros=0;atual=0;links=[];tits=[];linksNaoBaixados=[]
 
-    atual = 0
-    links = []
-    tits = []
     list_tasks.delete(0, END)
     pb['value'] = 0
     progresslabel.config(text="")
         
 def Browse():
-    download_Directory = filedialog.askdirectory(initialdir="YOUR DIRECTORY PATH") 
+    download_Directory = filedialog.askdirectory(initialdir=os.getcwd(),
+                                                 title="Selecione canto para baixar as músicas")
     download_Path.set(download_Directory)
     
 def Download():
-    global atual
+    global atual,erros,linksNaoBaixados
     
-    total = 100
     download_Folder = download_Path.get()
     progresslabel.config(text=". . .")
-    
-    try:
-        if links:
-            for Youtube_link in links:
-                  
+
+    #Se existir algo na lista de links
+    if links:
+        for Youtube_link in links:
+            try:
                 yt = YouTube(Youtube_link)
                 
                 video = yt.streams.filter(only_audio=True).first()
                 out_file = video.download(output_path=download_Folder)
 
-                base, ext = os.path.splitext(out_file)
+                base,ext = os.path.splitext(out_file)
                 new_file = base + '.mp3'
-                old_file = base + '.mp4'
 
                 try:
-                    os.rename(out_file, new_file)
-                    
-                except:
                     if os.path.exists(new_file):
-                        resposta = messagebox.askyesno("YouLey","Já existe alguma dessas músicas, deseja baixar novamente?")
-                        if not resposta:
-                            os.remove(old_file)
-                        else:
-                            os.remove(new_file)
-                            os.rename(out_file, new_file)
-                            
-                atual = atual + 1
+                        os.remove(new_file)
+                        os.rename(out_file, new_file)
+                    else:
+                        os.rename(out_file, new_file)
+                except:
+                    messagebox.showinfo("YouLey","Vixe, deu ruim!, não deu pra substituir")
+                           
+                atual += 1
                 progresslabel.config(text=str(atual) + "/" + str(len(links)))
-                pb['value'] += total/len(links)
+                pb['value'] += 100/len(links)
                 
-            messagebox.showinfo("YouLey","Prontinho!")
-        else:
-            messagebox.showinfo("YouLey","Quer baixar o que se não tem nada?")   
-    except:
-        messagebox.showinfo("YouLey","Vixe, deu ruim!")
+            except:
+                if yt.age_restricted:
+                    print('idade restrita')
                 
+                linksNaoBaixados.append(str(yt.title))
+                erros += 1; atual += 1 
+                print(yt.title + " não será baixado")
+                progresslabel.config(text=str(atual) + "/" + str(len(links)))
+                pb['value'] += 100/len(links)
+
+    #Senão existir nada na lista
+    else:
+        messagebox.showinfo("YouLey","Quer baixar o que se não tem nada?")
+        return
+
+    if erros>0:
+        msg = str('Baixou quase tudo! Com exceção de: ' + str(erros) + ' musicas'+'\n'+'Quais foram?'+'\n'+str(linksNaoBaixados))
+        messagebox.showinfo("YouLey",msg)
+    else:
+        messagebox.showinfo("YouLey","Prontinho! Todas músicas baixadas")
+
     reset_task_list()
-    
+
+#ROOT 
 root = tk.Tk()
-
-#width = int(465)
-#height = int(100)
-
 width = int(435)
 height = int(310)
 
+#TAMANHO DA TELA E TITULOS
 root.geometry(f"{width}x{height}") 
-root.resizable(False, False) 
+root.resizable(0,0) 
 root.title("YouLey") 
 root.config(background="white") 
 #root.attributes('-alpha',0.85)
 
+#PASTA INICIAL PARA BAIXAR
 downloadPathInitial = str(Path.home() / "Downloads")
 downloads_path = downloadPathInitial
 download_Path = StringVar() 
