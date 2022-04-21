@@ -1,19 +1,15 @@
-import tkinter as tk
-from tkinter import ANCHOR, CENTER, font as f
-from tkinter import *
-from pytube import YouTube
-from fileinput import filename
-from cgitb import text
 from tkinter import messagebox, filedialog
+from pytube import YouTube,Playlist
 from pathlib import Path
-import threading
-import os
 from tkinter import ttk
+from tkinter import *
+import tkinter as tk
+import re,os,threading
 
 threads = []
-
 links = []
 tits = []
+
 atual = 0
 
 def openNewWindow():
@@ -25,22 +21,54 @@ def startThreadProcess():
     myNewThread = threading.Thread(target=Download)
     threads.append(myNewThread)
     myNewThread.start()
-
+    
+def startThreadProcessToAdd(Event=None):
+    myNewThreadToAdd = threading.Thread(target=add_item)
+    threads.append(myNewThreadToAdd)
+    myNewThreadToAdd.start()
+    
 def add_item(Event=None):
     target = linkText.get()
-    if target == "":
-        return
-    try:
-        yt = YouTube(target)
-        tit = str(yt.title)
-        tits.append(tit)
-    except:
+    x = str(re.findall("playlist", target))
+    
+    #Se for playlist
+    if 'playlist' in x:
+        print('é uma playlist')
+        #Baixa playlist
+        p = Playlist(target)
+        try:
+            for url in p.video_urls:
+                links.append(str(url))
+                yt = YouTube(url)
+                tit = str(yt.title)
+
+                list_tasks.insert("0",tit)
+                progresslabel.config(text="0" + "/" + str(len(links)))
+        except:
+            clear_input()
+            return
         clear_input()
+            
+    #Se não tiver nada 
+    elif target == "":
+        print('link sem nada')
         return
-    clear_input()
-    links.append(target)
-    list_tasks.insert("0",tit)
-    progresslabel.config(text="0" + "/" + str(len(links)))
+    
+    #Se for video normal
+    else:
+        print('é um video normal')
+        #Baixa video normal
+        try:
+            yt = YouTube(target)
+            tit = str(yt.title)
+            tits.append(tit)
+        except:
+            clear_input()
+            return
+        clear_input()
+        links.append(target)
+        list_tasks.insert("0",tit)
+        progresslabel.config(text="0" + "/" + str(len(links)))
 
 def clear_input(Event=None):
     linkText.delete(0,"end")
@@ -137,7 +165,7 @@ list_tasks.bind("<Delete>", reset_task_list)
 #ENTRY DO LINK
 linkText = Entry(root,width=55) 
 linkText.grid(row=1,column=1,pady=5,padx=5,columnspan = 2)
-linkText.bind("<Return>", add_item)
+linkText.bind("<Return>", startThreadProcessToAdd)
 linkText.focus()
 
 #DIRETÓRIO A SER SELECIONADO LABEL
@@ -159,7 +187,7 @@ Download_B = Button(root,text="Baixar tudo",command=startThreadProcess,width=20,
 Download_B.grid(row=24,column=0,columnspan=4,pady=3,padx=3)
 
 #LABEL PROGRESS
-progresslabel = tk.Label(root, text='',width=2, bg="white")
+progresslabel = tk.Label(root, text='',width=5, bg="white")
 progresslabel.grid(row=22,column=0)
 
 #LABEL FOOTER
