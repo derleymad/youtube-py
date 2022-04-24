@@ -1,4 +1,3 @@
-from pytube import YouTube
 from video import *
 from gui import *
 
