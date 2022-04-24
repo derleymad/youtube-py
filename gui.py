@@ -1,14 +1,14 @@
 from tkinter import filedialog
 from pathlib import Path
 from tkinter import *
-import video
 import platform
-import os
+import os,re
 
 class YouLey:
     def __init__(self, root) -> None:
         self.w = int(root.winfo_screenwidth()/3)
         self.h = int(root.winfo_screenheight()/2.5)
+        self.links = []
         
         frameTOP = Frame(root,bg='white')
         frameMIDDLE = Frame(root,bg='white')
@@ -43,29 +43,32 @@ class YouLey:
         self.printButton3 = Button(frameMIDDLE, text = 'Procurar', command=self.browse)
         self.printButton3.pack(side=RIGHT,padx=10)
 
-        self.printListBox = Listbox(frame,justify=CENTER,fg='green',highlightcolor='light green',)
+        self.printListBox = Listbox(frame,justify=CENTER,fg='green',highlightcolor='light green')
         self.printListBox.pack(side=TOP, fill=BOTH, expand=True,padx=10,pady=10)
         self.printListBox.bind('<Delete>',self.deleteSelected)
+        self.printListBox.bind('<Return>',self.selected_item)
+        #self.printListBox.bind('<<ListboxSelect>>', callback)
 
         self.printButton2 = Button(frame, text = 'Download')
         self.printButton2.pack(side=TOP,padx=10, pady=10)
 
     def sendToListBox(self,Event=None):
-        titulo = self.getEntry()
-        if ' ' in titulo:
+        #ENVIAR PARA OS LINKS
+        link = self.getEntry()
+        if ' ' in link:
             self.clearEntry()
             return
 
-        elif titulo== '':
+        elif link== '':
             self.clearEntry()
             return
 
-        elif len(titulo) >= 55:
-            self.printListBox.insert(0,titulo[:49]+'...')
+        elif len(link) >= 55:
+            self.printListBox.insert(0,link[:49]+'...')
             self.clearEntry()
 
         else:
-            self.printListBox.insert(0,titulo)
+            self.printListBox.insert(0,link)
             self.clearEntry()
 
     def getEntry(self):
@@ -97,3 +100,7 @@ class YouLey:
 
     def deleteSelected(self,Event=None):
         self.printListBox.delete(ANCHOR)
+
+    def selected_item(self,Event=None):
+        for i in self.printListBox.curselection():
+            print(self.printListBox.get(i))
