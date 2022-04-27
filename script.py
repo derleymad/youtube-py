@@ -11,6 +11,7 @@ import patoolib
 
 
 linksNaoBaixados,threads,links,tits,erros,atual = [],[],[],[],0,0
+os.chdir(Path(__file__).parent.absolute())
 
 def unzipFFMPEG():
     if not os.path.isfile('ffmpeg/ffmpeg.exe'):
@@ -116,11 +117,14 @@ def Download():
                 else:
                     os.chdir('ffmpeg')
 
-                try:
-                    sub = subprocess.getstatusoutput(f'ffmpeg -i "{out_file}" "{new_file}" ')
-                    os.remove(out_file)
-                except:
-                    print('algo no subprocesso')
+                if not os.path.isfile(new_file) or not os.path.isfile(out_file):
+                    try:
+                        sub = subprocess.getstatusoutput(f'ffmpeg -i "{out_file}" "{new_file}" ')
+                        os.remove(out_file)
+                    except:
+                        print('algo no subprocesso')
+                else:
+                    pass
 
                 atual += 1
                 progresslabel.config(text=str(atual) + "/" + str(len(links)))
