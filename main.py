@@ -1,4 +1,3 @@
-from asyncio import subprocess
 from tkinter import messagebox, filedialog
 from pytube import YouTube,Playlist
 from pathlib import Path
@@ -7,22 +6,18 @@ import re,os,threading
 from tkinter import *
 import tkinter as tk
 import subprocess
-import patoolib
-
 
 linksNaoBaixados,threads,links,tits,erros,atual = [],[],[],[],0,0
-os.chdir(Path(__file__).parent.absolute())
 
 def unzipFFMPEG():
-    if not os.path.isfile('ffmpeg/ffmpeg.exe'):
-        patoolib.extract_archive("ffmpeg/ffmpeg.rar", outdir="ffmpeg")
+    if os.path.isfile('assets\\exe\\ffmpeg.exe'):
+        print('tem o arquivo exe')
     else:
-        return
+        print('ainda não tem')
+        subZip = subprocess.getstatusoutput(f'assets\\exe\\UnRAR.exe e -y assets\\exe\\ffmpeg.rar assets\\exe')
+        print(subZip)
+        
 
-
-def bToM(number):
-    return number / 1000000
-    
 def startThreadProcess():
     myNewThread = threading.Thread(target=Download)
     threads.append(myNewThread)
@@ -34,6 +29,7 @@ def startThreadProcessToAdd(Event=None):
     myNewThreadToAdd.start()
     
 def add_item(Event=None):
+
     target = linkText.get()
     x = str(re.findall("playlist", target))
     
@@ -47,7 +43,7 @@ def add_item(Event=None):
                 links.append(str(url))
                 yt = YouTube(url)
                 tit = str(yt.title)
-                list_tasks.insert("0",tit)
+                list_tasks.insert("0",tit[:59]+'...')
                 progresslabel.config(text="0" + "/" + str(len(links)))
         except:
             print("erro em adiconar elem na playlist")
@@ -112,14 +108,9 @@ def Download():
                 base,ext = os.path.splitext(out_file)
                 new_file = base + '.mp3'
 
-                if 'ffmpeg' in os.getcwd():
-                    pass
-                else:
-                    os.chdir('ffmpeg')
-
                 if not os.path.isfile(new_file) or not os.path.isfile(out_file):
                     try:
-                        sub = subprocess.getstatusoutput(f'ffmpeg -i "{out_file}" "{new_file}" ')
+                        sub = subprocess.getstatusoutput(f'assets\\exe\\ffmpeg -i "{out_file}" "{new_file}" ')
                         os.remove(out_file)
                     except:
                         print('algo no subprocesso')
