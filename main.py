@@ -2,13 +2,15 @@ from tkinter import messagebox, filedialog
 from pytube import YouTube,Playlist
 from pathlib import Path
 from tkinter import ttk
-import re,os,threading
+import re,os,threading,time
 from tkinter import *
 import tkinter as tk
 import subprocess
+from math import floor
 
 linksNaoBaixados,threads,links,tits,erros,atual = [],[],[],[],0,0
 
+## USAR TIME PARA MEDIR TEMPO START =TIME() STOP = TIME()
 def unzipFFMPEG():
     if os.path.isfile('assets\\exe\\ffmpeg.exe'):
         print('tem o arquivo exe')
@@ -88,32 +90,45 @@ def Browse():
     download_Directory = filedialog.askdirectory(initialdir=os.getcwd(),
                                                  title="Selecione canto para baixar as músicas")
     download_Path.set(download_Directory)
+
+def popen_and_call(on_exit, popen_args):
+    def run_in_thread(on_exit, popen_args):
+        proc = subprocess.Popen(*popen_args)
+        proc.wait()
+        on_exit()
+        return
+    thread = threading.Thread(target=run_in_thread, args=(on_exit, popen_args))
+    thread.start()
+    # returns immediately after the thread starts
+    return thread
     
 def Download():
-    global atual,erros,linksNaoBaixados
+    global atual,erros,linksNaoBaixados,out
+    out= ''
     
     download_Folder = download_Path.get()
     progresslabel.config(text=". . .")
 
     #Se existir algo na lista de links
     if links:
+        start = time.time()
         for Youtube_link in links:
             try:
+                if os.path.isfile(out):
+                    os.remove(out)
+                    
                 yt = YouTube(Youtube_link)
                 
                 #video = yt.streams.filter(only_audio=True).first()
                 video = yt.streams.get_lowest_resolution()
                 out_file = video.download(output_path=download_Folder)
+                out = out_file
 
                 base,ext = os.path.splitext(out_file)
                 new_file = base + '.mp3'
 
                 if not os.path.isfile(new_file) or not os.path.isfile(out_file):
-                    try:
-                        sub = subprocess.getstatusoutput(f'assets\\exe\\ffmpeg -i "{out_file}" "{new_file}" ')
-                        os.remove(out_file)
-                    except:
-                        print('algo no subprocesso')
+                    subprocess.call(f'assets\\exe\\ffmpeg -i "{out_file}" "{new_file}" ', shell=True)
                 else:
                     pass
 
@@ -122,14 +137,24 @@ def Download():
                 pb['value'] += 100/len(links)
                 
             except:
-                if yt.age_restricted:
-                    print('idade restrita')
+                print('idade restrita')
                 
                 linksNaoBaixados.append(str(yt.title))
                 erros += 1; atual += 1 
                 print(yt.title + " não será baixado")
                 progresslabel.config(text=str(atual) + "/" + str(len(links)))
                 pb['value'] += 100/len(links)
+            if os.path.isfile(out):
+                os.remove(out)
+
+        stop = time.time()
+        tempoTotal = floor(stop-start)
+        if tempoTotal > 60:
+            tempoTotal = floor(int(tempoTotal / 60))
+            tempoTotal = str(tempoTotal) + ' minutos'
+        else:
+            tempoTotal = str(tempoTotal) + ' segundos'
+
 
     #Senão existir nada na lista
     else:
@@ -137,10 +162,10 @@ def Download():
         return
 
     if erros>0:
-        msg = str('Baixou quase tudo! Com exceção de: ' + str(erros) + ' musicas'+'\n'+'Quais foram?'+'\n'+str(linksNaoBaixados))
+        msg = str('Baixou quase tudo em '+tempoTotal+'! Com exceção de: ' + str(erros) + ' musicas'+'\n'+'Quais foram?'+'\n'+str(linksNaoBaixados))
         messagebox.showinfo("YouLey",msg)
     else:
-        messagebox.showinfo("YouLey","Prontinho! Todas músicas baixadas")
+        messagebox.showinfo("YouLey","Prontinho! Todas músicas baixadas em "+ tempoTotal)
 
     reset_task_list()
 
